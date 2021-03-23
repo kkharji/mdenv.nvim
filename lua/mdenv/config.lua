@@ -3,6 +3,7 @@ local log = require'plenary.log'.new({
   plugin = 'MdEnv',
 
 })
+
 -- log.error("hi")
 
 _MdEnvCfg = _MdEnvCfg or {}
@@ -57,43 +58,61 @@ local defaults = {
     --- the size of the toc split
     width = 0.2,
   },
-  --- conceal settings
-  conceal = {
+  --- Syntax configuration
+  syntax = {
+    --- Whether to enable mdenv syntax configurations. setting it to false might
+    --- not work since - syntax configurations is located in syntax/markdown.vim
     enable = true,
-    blacklist = {},
-    cursor = 'nv',
-    level = 3,
-    header = "◼",
-    qoute = "❝",
-    footnote = "ₙ",
-    dashed_list = '',
-    asterisk_list = '•',
-    numbered_list = '',
-    comment = { "‹", "›" },
-  },
-  highlighting = {
-    fanced = {'lua', 'viml', 'go'},
-    --- if {h1={}, h2='Title'} then set highlights indv
-    heading = 'Title',
-    bold = { attr = 'bold' },
-    italic = { attr = 'italic' },
-    mixed = 'htmlBoldItalic',
-    verbatim = 'Keyword',
-    strike = '',
-    codeblock = 'Special',
-    delimiters = {
-      atex   = 'Title',
-      setx   = 'Title',
-      bold   = 'Comment',
-      italic = 'Comment',
-      strike = 'Comment',
-      quote  = 'Comment',
-      code   = 'Comment'
+    --- Whether to italicize emphases, bold strong emphases and other styles to
+    --- reflect the markup visual equivalent.
+    markup = true,
+    --- Whether to use roman style for numbered lists.
+    roman_lists = true,
+    --- TODO
+    definition_lists = false,
+    --- Languages to include syntax files for. Be aware that to many fenced
+    --- languages (working only in code blocks) may effect performance. There is
+    --- an additional syntax command to add fenced languages highlighting on the
+    --- fly, when you need to, but for this list, make sure to only include what
+    --- you need
+    include = {
+      yaml = true,
+      html = true,
+      tex = true,
+      fenced = {},
     },
-    url = {
-      fg = '#58A6FF',
-      bg = 'NONE',
-      attr = "underline"
+    --- Cocneal configurations
+    conceal = {
+      --- Set to false to totally disable conceal configurations
+      enable = true,
+      --- Whether to conceal markups like **/_/~/ ... etc
+      markup = true,
+      --- Whether to conceal urls []() -> []
+      url = false,
+      --- wrapper for concealcursor
+      cursor = 'nv',
+      --- wrapper for conceallevel
+      level = 2,
+      --- Groups that you don't want be concealed.
+      blacklist = { },
+      --- Conceal chars
+      chars = {
+        super = 'ⁿ',
+        sub = 'ₙ',
+        atx = "◼",
+        codelang = "—",
+        codeend = "—",
+        abbrev = '→',
+        footnote = "༎",
+        definition = ' ',
+        quote = "❚",
+        list = "•",
+        checkbox_empty = "▢", -- TODO: implement
+        checkbox_done = "✔", -- TODO: implement
+        checkbox_pending = '—', -- TODO: implement
+        comment_start = '‹',
+        comment_end = '›'
+      },
     },
   },
   --- Images Module configuration, for dealing with images.
@@ -220,7 +239,7 @@ end
 ---@param key string
 ---@return boolean: true if it should be if key skipped
 local should_skip_type_checking = function(key)
-  for _, v in ipairs({ 'mappings', 'blacklist' }) do
+  for _, v in ipairs({ 'mappings', 'blacklist', 'fenced' }) do
     for _, k in ipairs(vim.split(key, "%.")) do
       if k:find(v) then
         return true
@@ -290,6 +309,7 @@ config.set = function(opts)
   else
     if vim.tbl_isempty(_MdEnvCfg) then
       _MdEnvCfg = defaults
+      config.values = _MdEnvCfg
     end
   end
 end
