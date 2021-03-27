@@ -1,7 +1,6 @@
 local config = {}
 local log = require'plenary.log'.new({
-  plugin = 'MdEnv',
-
+  plugin = 'MdEnv'
 })
 
 -- log.error("hi")
