@@ -17,47 +17,54 @@ documents from markdown markup language (+extensions) joyful, sensable and fast.
 Features/Modules
 ---
 
-- Folding
-  - [ ] fold mode stack.
-  - [ ] fold mode nested
-  - [ ] fold text format.
-- Syntax Highlighting
-  - [x] LINK:   don't underline and highlight links, change link group.
-  - [X] MARKUP: Comment surrounding shouldn't be red.
-  - [x] MARKUP: Heading delimitar should be same highlight group as header
-  - [x] INCLUDE: YAML doesn't work
-  - [-] Fenced: Languages defined in fence doesn't work. Using `g:markdown_fenced_languages` for now.
-  - [-] Fenced: conceal and highlighting breaks in lists: conceal break when
-    there is not empty line above or below.
-  - [ ] CodeBlock: dim codeblock background.
-  - [ ] MARKUP: Make bold and italic fgcolor optional.
-  - [ ] MARKUP: number lists should be same color as dashed lists
-  - [ ] MARKUP: empty verbterm \`\` is not reconginized as verbterm and it
-    breaks highlight for the following lines.
-  - [ ] List: delimitar should be same color as the checkbox or Conceal.
-  - [ ] MARKUP: Code shouldn't be highlighted as strings, but rather as Special.
-  - [ ] Extra: checkboxs chars and color
-  - [ ] Headings: Adding a styling sep breaks atx heading highlight
-* Indent
-  * [ ] `==` should not break indentation of lists.
-  * [ ] J should merge lists
-- Editing
-  * [ ] Lists
-    - [ ] Tab in any mode, indent/deindent list items, including todos #hard.
-      The number of space should refelct the user number of space or be a single
-      tab if the user uses that
-    - [ ] Shift-enter/Ctrl-enter o/O in lists creates a new list or checkboxs item. #medium
-      Or enter with double enter convert it to a regular line.
-    - [ ] Toggle/Cycle checkboxs. #easy
-  - [ ] style a range or current word #easy
-  - [ ] edit codeblock or table in a popup window using the new api #medium.
-* Events
-  - [ ] When a user has a reference to heading, define it automatically on
-    write, and delete it when it's no longer used.
-- Completion #later
-  - Heading tags completion #later
-  - Advance writing completion #later
-- Other
+### Folding
+
+- [ ] fold mode stack.
+- [ ] fold mode nested
+- [ ] fold text format.
+
+### Syntax Highlighting
+- [x] LINK:   don't underline and highlight links, change link group.
+- [X] MARKUP: Comment surrounding shouldn't be red.
+- [x] MARKUP: Heading delimitar should be same highlight group as header
+- [x] INCLUDE: YAML doesn't work
+- [-] Fenced: Languages defined in fence doesn't work. Using `g:markdown_fenced_languages` for now.
+- [-] Fenced: conceal and highlighting breaks in lists: conceal break when there is not empty line above or below.
+- [ ] CodeBlock: dim codeblock background.
+- [ ] MARKUP: Make bold and italic fgcolor optional.
+- [ ] MARKUP: number lists should be same color as dashed lists
+- [ ] MARKUP: empty verbterm \`\` is not reconginized as verbterm and it breaks highlight for the following lines.
+- [ ] List: delimitar should be same color as the checkbox or Conceal.
+- [ ] MARKUP: Code shouldn't be highlighted as strings, but rather as Special.
+- [ ] Extra: checkboxs chars and color
+- [ ] Headings: Adding a styling sep breaks atx heading highlight
+
+### Indent
+
+* [ ] `==` should not break indentation of lists.
+* [ ] J should merge lists
+
+### Editing
+- [ ] LIST: Tab in any mode, indent/deindent list items, including todos #hard.
+  - NOTE: The number of space should refelct the user number of space or be
+    a single tab if the user uses that
+- [ ] Shift-enter/Ctrl-enter o/O in lists creates a new list or checkboxs item. #medium
+  Or enter with double enter convert it to a regular line.
+- [x] List: `-` create a list or todo item in insert as well as fontmeter
+  block
+- [ ] LIST: Toggle/Cycle checkboxs. #easy
+- [ ] OTHER: style a range or current word #easy
+- [ ] edit codeblock or table in a popup window using the new api #medium.
+
+### Events
+- [ ] When a user has a reference to heading, define it automatically on write,
+      and delete it when it's no longer used.
+
+### Completion #later
+- Heading tags completion #later
+- Advance writing completion #later
+
+### Other
   - Dead link detection.
   - Virtual text for footnotes, kinda like annotations. see [annotate.el]
   - Toggle lines to list/tasks items.
