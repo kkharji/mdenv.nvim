@@ -130,6 +130,9 @@ local defaults = {
       select_header = 'S',
     },
 
+    --- Whether to enable insert magic mappings.
+    insert_magic = true,
+
     --- `textwidth`: The max textwidth before breaking the line.
     textwidth = 75,
 
