@@ -17,6 +17,25 @@ documents from markdown markup language (+extensions) joyful, sensable and fast.
 Features/Modules
 ---
 
+### Preview
+
+- [x] Generate and open pdf files
+- [x] Support conditional loading of preview module features.
+- [x] Change from one kind to another depending on last kind used to open the
+  previewer
+- [x] Only open pdf files if there aren't already open.
+- [ ] Auto-generate (aggressive) on any overall changes in the buffer.
+- [ ] Auto-refresh html page when regenerating html.
+- [ ] Auto-scroll html pages depending on current line in the buffer.
+- [ ] provide user a function to set HTML css.
+- [ ] Update previwer on switching to antoher markdown buffer.
+- [ ] On generation errors open quickfix with the errors.
+- [ ] provide user with function to set latex template for pdf
+- [ ] Set pandoc options and overriding preview defualts through fontmatter.
+  - e.g. generate pdf filename, template, css, template variables.
+- [ ] Close previewer on nvim exit.
+- [ ] cover other Filetypes then `*.md`, better yet, load them from a cfg value
+
 ### Folding
 
 - [ ] fold mode stack.
@@ -24,36 +43,44 @@ Features/Modules
 - [ ] fold text format.
 
 ### Syntax Highlighting
-- [x] LINK:   don't underline and highlight links, change link group.
-- [X] MARKUP: Comment surrounding shouldn't be red.
-- [x] MARKUP: Heading delimitar should be same highlight group as header
-- [x] INCLUDE: YAML doesn't work
-- [-] Fenced: Languages defined in fence doesn't work. Using `g:markdown_fenced_languages` for now.
-- [-] Fenced: conceal and highlighting breaks in lists: conceal break when there is not empty line above or below.
-- [ ] CodeBlock: dim codeblock background.
-- [ ] MARKUP: Make bold and italic fgcolor optional.
-- [ ] MARKUP: number lists should be same color as dashed lists
-- [ ] MARKUP: empty verbterm \`\` is not reconginized as verbterm and it breaks highlight for the following lines.
-- [ ] List: delimitar should be same color as the checkbox or Conceal.
-- [ ] MARKUP: Code shouldn't be highlighted as strings, but rather as Special.
-- [ ] Extra: checkboxs chars and color
-- [ ] Headings: Adding a styling sep breaks atx heading highlight
+
+- [x] don't underline and highlight links, change link group.
+- [X] Comment surrounding shouldn't be red.
+- [x] Heading delimitar should be same highlight group as header
+- [x] Fix YAML syntax highlight not getting activitied
+- [ ] codeblocks conceal break when indented in a list if there's no space above
+  or bellow.
+- [ ] dim codeblock background.
+- [ ] Make bold and italic fgcolor optional.
+- [ ] Fix empty verbterm \`\` being not recognized as verbterm (it breaks highlight for the following lines).
+- [ ] Make number lists same color as dashed lists.
+- [ ] Make list delimiter same color as the check-Boxes or Conceal.
+- [ ] Fix styling separator breaking atx heading highlight.
+- [ ] Fix bug leading to the use `g:markdown_fenced_languages`.
+- [ ] Make level 1, level 2, level 3 have different conceal char and optional.
 
 ### Indent
 
-* [ ] `==` should not break indentation of lists.
-* [ ] J should merge lists
+* [ ] Fix `==` breaking indentation of lists.
+* [ ] Make J merge check-Boxes, deleting the check-Boxes on merge.
 
-### Editing
-- [ ] LIST: Tab in any mode, indent/deindent list items, including todos #hard.
-  - NOTE: The number of space should refelct the user number of space or be
-    a single tab if the user uses that
-- [ ] Shift-enter/Ctrl-enter o/O in lists creates a new list or checkboxs item. #medium
+
+### Editing/Insert
+
+- [x] Make dash create a list, checkbox as well as fontmatter when being at 1st line.
+- [ ] Shift-enter/Ctrl-enter o/O in lists creates a new list or checkboxes item. #medium
   Or enter with double enter convert it to a regular line.
-- [x] List: `-` create a list or todo item in insert as well as fontmeter
-  block
-- [ ] LIST: Toggle/Cycle checkboxs. #easy
-- [ ] OTHER: style a range or current word #easy
+
+### Editing/all
+- [ ] Make `<Tab>` in all modes, indent/de-indent list items, including checkboxes.
+  - NOTE: The number of space should refelct the user number of space or be
+  a single tab if the user uses that
+
+#### Other
+- [ ] Toggle/Cycle check-Boxes.
+- [ ] style (bold/italic/verbterm) a range or current word #easy
+
+### Extension
 - [ ] edit codeblock or table in a popup window using the new api #medium.
 
 ### Events
@@ -70,6 +97,20 @@ Features/Modules
   - Toggle lines to list/tasks items.
   - Toggle table to csv and back.
   - convert between CSV and table.
+
+Credit
+---
+
+- https://github.com/wincent/corpus
+- https://github.com/SidOfc/mkdx
+- https://github.com/bwhelm/vim-listmode
+- https://github.com/vim-pandoc/vim-pandoc
+- https://github.com/coachshea/vim-textobj-markdown
+- https://jblevins.org/projects/markdown-mode/
+
+<!-- help -->
+
+<!--
 
 ### Review of markdown highlighting plugins
 
@@ -98,20 +139,6 @@ Features/Modules
   - add footnote mapping
   - handle header renaming and fix internal link
 
-
-Credit
----
-
-- https://github.com/wincent/corpus
-- https://github.com/SidOfc/mkdx
-- https://github.com/bwhelm/vim-listmode
-- https://github.com/vim-pandoc/vim-pandoc
-- https://github.com/coachshea/vim-textobj-markdown
-- https://jblevins.org/projects/markdown-mode/
-
-<!-- help -->
-
-<!--
   * http://vim.wikia.com/wiki/Creating_new_text_objects
   * https://github.com/shushcat/vim-minimd simple implementation of pandoc
   * https://github.com/conornewton/vim-pandoc-markdown-preview

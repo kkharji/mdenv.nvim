@@ -29,23 +29,52 @@ local defaults = {
   bib = {},
   --- Preview Module Configuration
   preview = {
+    --- Whether to enable or disable auto preview.
+    --- useful if you want to enable preview features for specfic dir or
+    --- condition
+    enable = function()
+      return true
+    end,
     --- Whether to activate previwer on BufEnter enter.
-    auto_open = false,
+    auto_open = function ()
+      return false
+    end,
     --- What format to default to when launching the previewer (web, pdf)
-    preffered_previewer = 'pdf',
-    --- Whether to regenerate on save.
-    auto_gen  = true,
-    --- Whether to delete generated files on VimLeave
+    preferred_kind = 'pdf',
+    --- Auto generate.
+    auto_gen  = {
+      --- Whether to regenerate on save.
+      enable = function()
+        return true
+      end,
+
+      --- Whether to generate on InsertLeave
+      aggressive = true,
+
+      --- Whether auto generation silent. Default to silent becuase it can be
+      --- pretty annoying with aggressive being ture.
+      silent = true,
+
+    },
+    --- Whether to delete generated files on VimLeave (WIP)
     clean = false,
+
     --- pdf browser to open the generate pdf file.
-    pdf = 'zathura',
+    pdf = {
+      cmd = 'zathura',
+      engine = 'xelatex',
+      args = {''}
+    },
     --- Browser to open the generate html file.
-    browser = 'firefox',
+    html = {
+      cmd = 'firefox',
+      args = {''}
+    },
     --- path to save generated pdf and html files.
     path = function()
       --- can be current directory or a path under current directory.
       --- true: generate in current directory under export
-      return '/tmp/mdenv'
+      return '/tmp'
     end,
   },
   --- Toc module configuration
@@ -220,9 +249,6 @@ local defaults = {
     end,
     ['zz'] = 'toggle_spelling',
   },
-
-
-
 }
 
 --- Enahnced version of builtin type function that inclued list type.
