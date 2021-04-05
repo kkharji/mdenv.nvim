@@ -145,6 +145,8 @@ preview.attach = function ()
   if cfg.auto_gen.enable() then
     local events = {'BufWritePre'}
 
+    -- Disabled be default until I figure out what commands to add to make this
+    -- trully aggressive
     if cfg.auto_gen.aggressive then
       for _, e in ipairs {
         'InsertLeave'

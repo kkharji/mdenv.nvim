@@ -48,8 +48,9 @@ local defaults = {
         return true
       end,
 
-      --- Whether to generate on InsertLeave
-      aggressive = true,
+      --- Whether to generate Disabled be default until I figure out what
+      --- commands to add to make this trully aggressive
+      aggressive = false,
 
       --- Whether auto generation silent. Default to silent becuase it can be
       --- pretty annoying with aggressive being ture.
