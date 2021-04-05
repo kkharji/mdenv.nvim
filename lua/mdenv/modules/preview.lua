@@ -14,19 +14,22 @@ local get_info = function(kind)
   local info = {}
   info.filename = vim.split(vim.fn.expand("%:t"), "%.")[1]
   info.cwd = vim.loop.cwd()
-  info.path = vim.fn.expand("%")
   info.out = join { cfg.path(), "/", info.filename, ".", kind }
+  info.path = vim.fn.expand("%")
   info.exists = vim.loop.fs_lstat(info.out)
 
   return info
 end
 
 local generate = function(opts)
+  -- assert(type(opts.kind) == "string")
   opts = opts or {}
   local args = {'-s', opts.info.path, '-o', opts.info.out }
 
   if opts.kind == 'pdf' then
     args[#args+1] = "--pdf-engine=" .. cfg.pdf.engine
+  else
+    args[#args+1] = "--self-contained"
   end
   -- print(vim.inspect(opts))
   return job:new({

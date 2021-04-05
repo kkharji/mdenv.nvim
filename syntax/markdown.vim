@@ -192,14 +192,14 @@ endif
 
 " let's not consider "a [label] a" as a label, remove formatting - Note: breaks implicit links
 syn match MdNoLabel /\]\@1<!\(\s\{,3}\|^\)\[[^\[\]]\{-}\]\(\s\+\|$\)[\[(]\@!/ contains=MdPCite
-syn match MdLinkTip /\s*".\{-}"/ contained containedin=MdReferenceURL contains=@Spell,MdAmpersandEscape display
+syn match MdLinkTip /\s*".\{-}"/ contained containedin=MdReferenceURL contains=MdAmpersandEscape display
 " }}}1
 
 " DefinitionsLinks: {{{1
 syn region MdReferenceDefinition start="!\=\[\%(\_[^]]*]\%( \=[[(]\)\)\@=" end="\]\%( \=[[(]\)\@=" keepend
 syn match MdReferenceDefinitionLabel /\[\zs.\{-}\ze\]:/ contained containedin=MdReferenceDefinition display
 syn match MdReferenceDefinitionAddress /:\s*\zs.*/ contained containedin=MdReferenceDefinition
-syn match MdReferenceDefinitionTip /\s*".\{-}"/ contained containedin=MdReferenceDefinition,MdReferenceDefinitionAddress contains=@Spell,MdAmpersandEscape
+syn match MdReferenceDefinitionTip /\s*".\{-}"/ contained containedin=MdReferenceDefinition,MdReferenceDefinitionAddress contains=MdAmpersandEscape
 " }}}1
 
 " AutomaticLinks: {{{1
@@ -572,7 +572,7 @@ hi link MdHRule Delimiter
    call EnableEmbedsforCodeblocksWithLang(l)
  endfor
 " TODO: remove after fixing the above
- for l in g:markdown_fenced_languages
+ for l in g:mdenv_fenced
    call EnableEmbedsforCodeblocksWithLang(l)
  endfor
 " }}}1
