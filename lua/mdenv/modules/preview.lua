@@ -16,7 +16,8 @@ local get_info = function(kind)
   info.cwd = vim.loop.cwd()
   info.out = join { cfg.path(), "/", info.filename, ".", kind }
   info.path = vim.fn.expand("%")
-  info.exists = vim.loop.fs_lstat(info.out)
+  info.preview_exits = vim.loop.fs_lstat(info.out)
+  info.source_exits = vim.loop.fs_lstat(vim.fn.expand('%:p'))
 
   return info
 end
@@ -96,6 +97,8 @@ preview.generate = function(o)
   o = vim.tbl_extend("keep", o or {}, defaults)
 
   o.info = o.info or get_info(o.kind)
+  if not o.info.source_exits then return end
+
   o.cb = o.cb or post(nil, o)
 
   -- TODO: animate gerernating pdf with spinner
@@ -125,7 +128,7 @@ preview.open = function(kind)
     info = get_info(kind),
   }
   o.cb = post(function() return open(o) end, o)
-  curr_kind = kind; (o.info.exists and open or generate)(o)
+  curr_kind = kind; (o.info.preview_exists and open or generate)(o)
 end
 
 ---Main attach function for preview module.
