@@ -15,9 +15,9 @@ local get_info = function(kind)
   info.filename = vim.split(vim.fn.expand("%:t"), "%.")[1]
   info.cwd = vim.loop.cwd()
   info.out = join { cfg.path(), "/", info.filename, ".", kind }
-  info.path = vim.fn.expand("%")
-  info.preview_exits = vim.loop.fs_lstat(info.out)
-  info.source_exits = vim.loop.fs_lstat(vim.fn.expand('%:p'))
+  info.path = vim.fn.expand('%:p')
+  info.preview_exits = vim.loop.fs_lstat(info.out) ~= nil
+  info.source_exits = vim.loop.fs_lstat(info.path) ~= nil
 
   return info
 end
@@ -118,23 +118,40 @@ end
 ---Open Mdenv Previewer
 --- if |cfg.enable| return true, then it will open the previewer if the file
 --- already exists, else generate then open. else nothing.
----TODO: do we need to stop the user from opening preview?
 ---@param kind string: 'pdf' or 'html', default to |cfg.preferred_kind|
 ---@see generate
 ---@see open
 preview.open = function(kind)
-  local o = {
-    kind = kind or cfg.preferred_kind,
-    info = get_info(kind),
-  }
-  o.cb = post(function() return open(o) end, o)
-  curr_kind = kind; (o.info.preview_exists and open or generate)(o)
+  local o, run = {}, nil
+
+  o.kind = kind or cfg.preferred_kind
+  o.info = get_info(o.kind)
+
+  run = o.info.preview_exits and open or generate
+
+  o.cb = post(function()
+    return open(o)
+  end, o)
+
+  curr_kind = kind
+
+  run(o)
 end
+
+local attached = false
+local last_attached = {}
 
 ---Main attach function for preview module.
 --- Checks for pandoc executable, error
 preview.attach = function ()
   local au = {}
+  local filepath = vim.fn.expand("%:p")
+
+  -- Because attach function maybe ran twice for some odd reason I don't know
+  -- of :/.
+  if attached and last_attached.path == filepath then
+    return
+  end
 
   ----------------------- check for pandoc executable
   if not vim.fn.executable("pandoc") == 1 then
@@ -148,9 +165,15 @@ preview.attach = function ()
     -- Disabled be default until I figure out what commands to add to make this
     -- trully aggressive
     if cfg.auto_gen.aggressive then
-      for _, e in ipairs {
-        'InsertLeave'
-      } do events[#events+1] = e end
+      local events = {
+        'InsertLeave',
+        'CursorHold',
+        'CursorHoldI',
+        'CursorMovedI'
+      }
+      for _, e in ipairs(events) do
+        events[#events+1] = e
+      end
     end
 
     au[('%s *.md'):format(join(events, ","))] = ('lua %s'):format(strfun('auto_generate()'))
@@ -173,6 +196,9 @@ preview.attach = function ()
     ['nx|' .. _cfg.leader .. rmaps['open_pdf']] = strfun("open('pdf')"),
     ['nx|' .. _cfg.leader .. rmaps['open_html']] = strfun("open('html')")
   })
+
+  attached = true
+  last_attached = { path = filepath }
 end
-preview.attach()
+
 return preview
