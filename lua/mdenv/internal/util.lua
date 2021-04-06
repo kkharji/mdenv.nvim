@@ -10,6 +10,26 @@ util.strfun = function (mname)
   end
 end
 
+--- Check if a given variable is empty. covers lists, tables, strings and check
+--- if the variable is nil.
+---@param xs any
+---@return boolean
+util.is_empty = function(xs)
+  if type(xs) == "string" then
+    return xs == ''
+  elseif type(xs) == "table" then
+    return vim.tbl_isempty(xs)
+  elseif xs == nil then
+    return true
+  end
+end
+
+---Same as |is_empty| except it return true if the given variable is not empty.
+---@param xs any
+---@return boolean
+util.not_empty = function(xs)
+  return not util.is_empty(xs)
+end
 
 ---Reverse the k with v, used for looking up by values.
 ---@param t table: table to reverse.

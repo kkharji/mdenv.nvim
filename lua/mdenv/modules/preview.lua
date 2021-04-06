@@ -1,5 +1,6 @@
 local nvim   = require'mdenv.internal.nvim'
 local job    = require'plenary.job'
+local Path    = require'plenary.path'
 local log    = require'plenary.log'.new({ plugin = 'MdEnv' })
 local _cfg   = require'mdenv.config'.values
 local util   = require'mdenv.internal.util'
@@ -8,72 +9,110 @@ local join   = table.concat
 local cfg    = _cfg.preview
 local maps   = _cfg.mappings
 local strfun = util.strfun('mdenv.modules.preview')
+local uv     = vim.loop
 local preview = {}
+local pandoc = vim.fn.executable("pandoc") == 1
 
-local get_info = function(kind)
+--- In case the user open html preview and want to still use it
+local curr_kind = nil
+
+-- Because attach function maybe ran twice for some odd reason!!!
+local last_attached_file = ''
+
+---Generates the table require to generate preview files.
+---@param kind string: the kind to generate.
+---@return table
+preview._get_info = function(kind)
   local info = {}
   info.filename = vim.split(vim.fn.expand("%:t"), "%.")[1]
-  info.cwd = vim.loop.cwd()
-  info.out = join { cfg.path(), "/", info.filename, ".", kind }
-  info.path = vim.fn.expand('%:p')
-  info.preview_exits = vim.loop.fs_lstat(info.out) ~= nil
-  info.source_exits = vim.loop.fs_lstat(info.path) ~= nil
+  info.cwd = uv.cwd()
+  info.out_path = join { cfg.path(), "/", info.filename, ".", kind }
+  info.out_exists = uv.fs_lstat(info.out_path) ~= nil
+  info.source_path = vim.fn.expand('%:p')
+  info.source_exits = uv.fs_lstat(info.source_path) ~= nil
 
   return info
 end
 
-local generate = function(opts)
-  -- assert(type(opts.kind) == "string")
-  opts = opts or {}
-  local args = {'-s', opts.info.path, '-o', opts.info.out }
-
-  if opts.kind == 'pdf' then
-    args[#args+1] = "--pdf-engine=" .. cfg.pdf.engine
-  else
-    args[#args+1] = "--self-contained"
-  end
-  -- print(vim.inspect(opts))
-  return job:new({
-    command = 'pandoc',
-    args = vim.tbl_flatten{ args, opts.gen_args or {} },
-    cwd = opts.info.cwd,
-    on_exit = vim.schedule_wrap(opts.cb)
-  }):start()
-end
-
-local open = function(opts)
-  job:new({
-    command = opts.kind == "pdf" and cfg.pdf.cmd or cfg.html.cmd,
-    args = {opts.info.out}
-  }):start()
-end
-
-local notify_fail = function(job, kind)
+preview._on_gen_error = function(job, kind)
   local err  = join(job:stderr_result(), "\n")
-  local fmsg = "[mdenv] Unable to generate %s: %s"
+  local fmsg = "[mdenv] Fail to generate %s: %s"
 
+  -- TODO: make it open a quickfix
   return log.error(fmt(fmsg, kind, err))
 end
 
--- TODO: make it open a quickfix
-local post = function(fn, opts)
-  return function (j, c)
-    if c ~= 0 then
-      return notify_fail(j, opts.kind)
-    end
+--- The default template to use when generating PDF files.
+--- by default this function returns an empty list.
+--- Users can use this function to return different template based on what
+--- ever condition they see fit, e.g. current_dir, time of day (dark/light),
+--- based on environment variables ... etc. Additionally, this function will
+--- skip using the template if template file doesn't exists.  -@note This
+--- function will be ignored when `cfg.preview.pdf.templates` is set and the
+--- file has fontmatter with a vaild template name defined.  see
+--- |preview.templates|
+---@return table: {path = 'path/to/template', vars = {k=v}, extra {...}}
+preview.get_template = cfg.pdf.get_template
 
-    if not opts.silent then
-      print(fmt("[Mdenv]: %s Generated.", opts.kind))
-    end
+--- WIP: A key value pairs of template and a function identical to
+--- |preview.get_template| to get template for a given fontmatter template
+--- value.
+preview.templates = cfg.pdf.templates
 
-    if fn then
-      return fn(opts)
+--- Process latex template from
+---@param tp table: the template to process. It is the direct output of
+--|preview.get_template| or `preview.template['template_name']()``
+---@return table: generator args for the `tp`
+preview._process_template = function(tp)
+  local args = {}
+  local path = Path:new(tp.path):expand()
+
+  if uv.fs_lstat(path) == nil  then return end
+
+  args[#args+1] = fmt("--template=%s", path)
+
+  if tp.vars then
+    for k, v in pairs(tp.vars) do
+      args[#args+1] = "-V"
+      args[#args+1] = fmt('%s="%s"', k, v)
     end
   end
+
+  return util.not_empty(tp.extra) and args or vim.tbl_flatten{ args, tp.extra }
 end
 
---- In case the user open html preview and want to still use it
-local curr_kind = nil
+---Generates preview generator command line arguments
+---@param o table: options
+---@field kind string: pdf or html
+---@field source_path string: filepath of the markdown file.
+---@field out_path string: the desired filepath of generate file.
+---@field extra_args table: Any extra args to append to the command line args.
+---@return table
+preview._get_gen_args = function(o)
+  local extra_args = o.extra_args
+  local kind = o.kind
+  local source_path = o.info.source_path
+  local out_path = o.info.out_path
+  local args = {'-s', source_path, '-o', out_path }
+
+  if kind == 'pdf' then
+    args[#args+1] = "--pdf-engine=" .. cfg.pdf.engine
+
+    -- TOOD: First check if current fontmatter has a key 'template'.
+    -- If it does check if preview.templates[name] is non-nil, if so use it
+    -- instead of `preview.get_template`
+    local tp = cfg.pdf.get_template() -- can't use preview.get_template :/
+
+    if util.not_empty(tp) then
+      args = vim.tbl_flatten{ args, preview._process_template(tp) }
+    end
+
+  else
+    args[#args+1] = "--self-contained"
+  end
+
+  return util.not_empty(extra_args) and vim.list_extend(args, extra_args) or args
+end
 
 ---Generate preview files
 ---@param o table: options
@@ -81,38 +120,64 @@ local curr_kind = nil
 --- or last kind open for preview.
 ---@field silent boolean: whether to notify you at the start of generation and
 --- when the files are generated successfully.
----@field gen_args table: additional arguments to glow to the generator.
+---@field extra_args table: additional arguments to glow to the generator.
 ---@field cb function: the function to call when done generating, default is
+---@field info table: details about the file and path to generate to. see the
+--- return table from |preview._get_info|
 --- a simple checker.
 ---@see generate
 ---@see get_info
 ---@see post
+---@return function job
 preview.generate = function(o)
-  local defaults = {
-    kind = curr_kind or cfg.preferred_kind,
+  local i
+  local kind = curr_kind or cfg.preferred_kind
+  local d = {
+    kind = kind,
     silent = cfg.auto_gen.silent,
     gen_args = {},
+    info = preview._get_info(kind)
   }
 
-  o = vim.tbl_extend("keep", o or {}, defaults)
+  o = vim.tbl_extend("keep", o or {}, d)
+  i = o.info
 
-  o.info = o.info or get_info(o.kind)
-  if not o.info.source_exits then return end
-
-  o.cb = o.cb or post(nil, o)
-
-  -- TODO: animate gerernating pdf with spinner
+  if not i.source_exits then
+    return
+  end
   if not o.silent then
-    print(fmt("[Mdenv]: Generating %s ...", o.kind))
+    print(fmt("[Mdenv]: Generating %s ...", kind))
   end
 
-  return generate(o)
+  return job:new {
+    command = 'pandoc',
+    args = preview._get_gen_args(o),
+    cwd = i.cwd,
+    on_exit = vim.schedule_wrap(function(j, c)
+      if c ~= 0 then
+        preview._on_gen_error(j, kind)
+      elseif not o.silent then
+        print(fmt("[Mdenv]: %s Generated.", kind))
+      end
+    end)
+  }
 end
 
 ---Wrapper around generate that checks if preview module is enabled.
 preview.auto_generate = function()
   if not cfg.auto_gen.enable() then return end
-  preview.generate()
+  preview.generate():start()
+end
+
+--- Creates open job
+preview._open_job = function(o)
+  return job:new{
+    command = o.kind == "pdf" and cfg.pdf.cmd or cfg.html.cmd,
+    args = { o.info.out_path },
+    on_exit = vim.schedule_wrap(function(j, c)
+      if c ~= 0 then preview.on_gen_error(j, o.kind) end
+    end)
+  }
 end
 
 ---Open Mdenv Previewer
@@ -122,24 +187,22 @@ end
 ---@see generate
 ---@see open
 preview.open = function(kind)
-  local o, run = {}, nil
+  local run
+  kind = kind or cfg.preferred_kind
 
-  o.kind = kind or cfg.preferred_kind
-  o.info = get_info(o.kind)
+  local o = { kind = kind, info = preview._get_info(kind) }
 
-  run = o.info.preview_exits and open or generate
+  if not o.info.out_exists then
+    run = preview.generate(o)
+    run:and_then_on_success_wrap(preview._open_job(o))
+  else
+    run = preview._open_job(o)
+  end
 
-  o.cb = post(function()
-    return open(o)
-  end, o)
-
+  -- So that generator changes to the most recent open method.
   curr_kind = kind
-
-  run(o)
+  run:start()
 end
-
-local attached = false
-local last_attached = {}
 
 ---Main attach function for preview module.
 --- Checks for pandoc executable, error
@@ -147,18 +210,14 @@ preview.attach = function ()
   local au = {}
   local filepath = vim.fn.expand("%:p")
 
-  -- Because attach function maybe ran twice for some odd reason I don't know
-  -- of :/.
-  if attached and last_attached.path == filepath then
-    return
-  end
+  --- skip if already attached
+  if last_attached_file == filepath then return end
+  last_attached_file = filepath
 
-  ----------------------- check for pandoc executable
-  if not vim.fn.executable("pandoc") == 1 then
-    return log.error("pandoc executable not found")
-  end
+  --- check for pandoc executable
+  if not pandoc then return log.error("pandoc executable not found") end
 
-  ----------------------- auto-generate preview files
+  --- auto-generate preview files
   if cfg.auto_gen.enable() then
     local events = {'BufWritePre'}
 
@@ -179,17 +238,17 @@ preview.attach = function ()
     au[('%s *.md'):format(join(events, ","))] = ('lua %s'):format(strfun('auto_generate()'))
   end
 
-  ----------------------- auto-open previewer
+  --- auto-open previewer
   if cfg.auto_open() then
     preview.open()
   end
 
-  ----------------------- attach autocmds
+  --- attach autocmds
   if not vim.tbl_isempty(au) then
     nvim.augroup("preview", au)
   end
 
-  ----------------------- attach mappings
+  --- attach mappings
   local rmaps = util.kv_reverse(maps)
 
   nvim.map({
@@ -197,8 +256,6 @@ preview.attach = function ()
     ['nx|' .. _cfg.leader .. rmaps['open_html']] = strfun("open('html')")
   })
 
-  attached = true
-  last_attached = { path = filepath }
 end
 
 return preview

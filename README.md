@@ -14,8 +14,7 @@ documents from markdown markup language (+extensions) joyful, sensable and fast.
 * pandoc-imagine
 * TexLive
 
-Credit
----
+### Credit
 
 - https://github.com/wincent/corpus
 - https://github.com/SidOfc/mkdx

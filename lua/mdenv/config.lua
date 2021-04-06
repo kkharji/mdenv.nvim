@@ -64,6 +64,14 @@ local defaults = {
     pdf = {
       cmd = 'zathura',
       engine = 'xelatex',
+      --- path to latex template to be used in generating pdfs.
+      --- It's a function so the user can control what template to use, maybe
+      --- based on current path, or perhaps filename
+      --- TODO: pass parsed fontmatter varaibles here
+      get_template = function(_)
+        return {}
+      end,
+      templates = {},
       args = {''}
     },
     --- Browser to open the generate html file.
@@ -268,7 +276,7 @@ end
 ---@param key string
 ---@return boolean: true if it should be if key skipped
 local should_skip_type_checking = function(key)
-  for _, v in ipairs({ 'mappings', 'blacklist', 'fenced' }) do
+  for _, v in ipairs({ 'mappings', 'blacklist', 'fenced', 'templates' }) do
     for _, k in ipairs(vim.split(key, "%.")) do
       if k:find(v) then
         return true
